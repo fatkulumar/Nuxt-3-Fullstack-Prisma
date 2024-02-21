@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id             Int              @id @default(autoincrement())
+  uuid           String           @unique(map: "uuid") @db.VarChar(60)
+  email          String           @unique(map: "email") @db.VarChar(255)
+  password       String           @db.VarChar(255)
+  avatar         String?          @db.VarChar(1000)
+  permissions    String?          @db.VarChar(4000)
+  first_name     String           @db.VarChar(255)
+  last_name      String           @db.VarChar(255)
+  role           Role             @default(GENERAL)
+  email_verified Boolean          @default(false)
+  is_active      Boolean          @default(true)
+  last_login     DateTime?        @db.DateTime(0)
+  created_at     DateTime         @default(now()) @db.DateTime(0)
+  deleted_at     DateTime?        @db.DateTime(0)
+  updated_at     DateTime?        @updatedAt
+  refresh_tokens refresh_tokens[]
+  sessions       sessions[]
+  provider_users provider_users[]
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  GENERAL
+}
+
+model refresh_tokens {
+  id           Int       @id @default(autoincrement())
+  token_id     String    @unique(map: "token_id") @db.VarChar(60)
+  user         users?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id      Int
+  is_active    Boolean
+  date_created DateTime  @default(now()) @db.DateTime(0)
+  updated_at   DateTime? @updatedAt
+}
+
+model sessions {
+  id           Int       @id @default(autoincrement())
+  user         users?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id      Int
+  sid          String    @unique(map: "sid")
+  start_time   DateTime  @default(now())
+  end_time     DateTime?
+  access_token String    @db.VarChar(4000)
+  csrf_token   String    @db.VarChar(255)
+  is_active    Boolean
+  ip_address   String
+  updated_at   DateTime? @updatedAt
+}
+
+model provider_users {
+  id               Int       @id @default(autoincrement())
+  provider         Provider
+  provider_user_id String    @unique(map: "provider_user_id")
+  user             users?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id          Int
+  updated_at       DateTime? @updatedAt
+}
+
+enum Provider {
+  GOOGLE
+}
+
